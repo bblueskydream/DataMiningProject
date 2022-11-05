@@ -1,10 +1,20 @@
 import pandas as pd
 import torch
+import torch.nn as nn
 from torch.utils.data import DataLoader
 from sklearn.model_selection import StratifiedKFold
-from transformers import AutoTokenizer, AutoModelForMaskedLM
+from transformers import AutoTokenizer, AutoModelForMaskedLM, AutoConfig
 from CCFDataSet import CCFDataSet
-from CCFModel import CCFNet
+from BertClassify import BertClassify
+
+
+def loss(outputs, labels):
+    return nn.CrossEntropyLoss()(outputs, labels)
+
+
+def my_collate(batch):
+    return
+
 
 # params
 MODEL_PATH = "../data/bert-base-chinese"
@@ -16,13 +26,15 @@ TEST_BATCH_SIZE = 4
 DEVICE = torch.device("cuda:0")
 LR = 1e-5
 LR_MIN = 1e-6
-CATEGORY_NUM = 36
+CLASS_NUM = 36
 EPOCH_TIMES = 40
 
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
 
 model = AutoModelForMaskedLM.from_pretrained(MODEL_PATH)
+
+config = AutoConfig.from_pretrained(MODEL_PATH)
 
 # read train.json and use KFold
 with open(DATA_PATH, "r", encoding="UTF-8") as f:
@@ -54,8 +66,14 @@ test = df[(df["kfold"] == selectFold0) | (df["kfold"] == selectFold1)].reset_ind
 trainSet = CCFDataSet(train, tokenizer, MAX_LEN)
 testSet = CCFDataSet(test, tokenizer, MAX_LEN)
 
-trainLoader = DataLoader(dataset=trainSet, batch_size=TRAIN_BATCH_SIZE, shuffle=True, drop_last=True)
-testLoader = DataLoader(dataset=testSet, batch_size=TEST_BATCH_SIZE, shuffle=True, drop_last=True)
+trainLoader = DataLoader(dataset=trainSet, batch_size=TRAIN_BATCH_SIZE,
+                         shuffle=True, drop_last=True, collate_fn=my_collate)
+testLoader = DataLoader(dataset=testSet, batch_size=TEST_BATCH_SIZE,
+                        shuffle=True, drop_last=True, collate_fn=my_collate)
 
-model = CCFNet(model)
+model = BertClassify(model, config, CLASS_NUM)
+model.to(device=DEVICE)
+
+# train
+# for epoch in range(EPOCH_TIMES):
 
