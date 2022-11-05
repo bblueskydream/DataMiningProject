@@ -1,9 +1,9 @@
 import torch
 from torch import nn
 
-# param
-model_name = "bert-base-chinese"
 class CCFNet(nn.Model):
-    def __init__(self):
+    def __init__(self, model):
+        super(CCFNet, self).__init__()
+        self.model = model
 
         return
