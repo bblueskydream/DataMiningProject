@@ -7,16 +7,17 @@ from CCFDataSet import CCFDataSet
 from CCFModel import CCFNet
 
 # params
-MODEL_PATH = "./data/bert-base-chinese"
-DATA_PATH = "./data/train.json"
+MODEL_PATH = "../data/bert-base-chinese"
+DATA_PATH = "../data/train.json"
 FOLD = 10
 MAX_LEN = 512
-BATCH_SIZE = 4
+TRAIN_BATCH_SIZE = 4
+TEST_BATCH_SIZE = 4
 DEVICE = torch.device("cuda:0")
 LR = 1e-5
 LR_MIN = 1e-6
-# SEED = 30
 CATEGORY_NUM = 36
+EPOCH_TIMES = 40
 
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
@@ -47,10 +48,14 @@ df.groupby("kfold")['label_id'].value_counts()
 
 selectFold0 = 0
 selectFold1 = 1
-train = df[df["kfold"] != selectFold0 & df["kfold"] != selectFold1].reset_index(drop=True)
-test = df[df["kfold"] == selectFold0 | df["kfold"] == selectFold1].reset_index(drop=True)
+train = df[(df["kfold"] != selectFold0) & (df["kfold"] != selectFold1)].reset_index(drop=True)
+test = df[(df["kfold"] == selectFold0) | (df["kfold"] == selectFold1)].reset_index(drop=True)
 
 trainSet = CCFDataSet(train, tokenizer, MAX_LEN)
 testSet = CCFDataSet(test, tokenizer, MAX_LEN)
 
-trainLoader = DataLoader(trainSet, )
+trainLoader = DataLoader(dataset=trainSet, batch_size=TRAIN_BATCH_SIZE, shuffle=True, drop_last=True)
+testLoader = DataLoader(dataset=testSet, batch_size=TEST_BATCH_SIZE, shuffle=True, drop_last=True)
+
+model = CCFNet(model)
+
