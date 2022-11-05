@@ -1,6 +1,8 @@
 import pandas as pd
 import torch
 import torch.nn as nn
+import torch.nn.functional as f
+from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
 from sklearn.model_selection import StratifiedKFold
 from transformers import AutoTokenizer, AutoModelForMaskedLM, AutoConfig
@@ -10,7 +12,6 @@ from BertClassify import BertClassify
 
 def loss(outputs, labels):
     return nn.CrossEntropyLoss()(outputs, labels)
-
 
 def my_collate(batch):
     return
@@ -26,8 +27,10 @@ TEST_BATCH_SIZE = 4
 DEVICE = torch.device("cuda:0")
 LR = 1e-5
 LR_MIN = 1e-6
+WEIGHT_DECAY = 1e-6
 CLASS_NUM = 36
 EPOCH_TIMES = 40
+T_MAX = 500
 
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
@@ -71,8 +74,11 @@ trainLoader = DataLoader(dataset=trainSet, batch_size=TRAIN_BATCH_SIZE,
 testLoader = DataLoader(dataset=testSet, batch_size=TEST_BATCH_SIZE,
                         shuffle=True, drop_last=True, collate_fn=my_collate)
 
-model = BertClassify(model, config, CLASS_NUM)
-model.to(device=DEVICE)
+bert_model = BertClassify(model, config, CLASS_NUM)
+bert_model.to(device=DEVICE)
+
+optimizer = torch.optim.AdamW(bert_model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
+scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=T_MAX, eta_min=LR_MIN)
 
 # train
 # for epoch in range(EPOCH_TIMES):
