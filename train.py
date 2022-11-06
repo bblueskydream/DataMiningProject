@@ -91,17 +91,9 @@ for epoch in range(EPOCH_TIMES):
     # train
     bar = tqdm(enumerate(trainLoader), total=len(trainLoader))
     for step, data in bar:
-        print(data)
-        data1 = dict()
-        # data1['input_ids'] = [x for x in data['input_ids']]
-        # data1['attention_mask'] = [x for x in data['attention_mask']]
-        # data1['label'] = [x for x in data['label']]
-        # ids = torch.tensor(data1['input_ids']).to(DEVICE, dtype=torch.long)
-        # mask = torch.tensor(data1['attention_mask']).to(DEVICE, dtype=torch.long)
-        # labels = torch.tensor(data1['label']).to(DEVICE, dtype=torch.long)
-        ids = (torch.cat(tuple(data['input_ids']))).to(DEVICE, dtype=torch.long)
-        mask = (torch.cat(tuple(data['attention_mask']))).to(DEVICE, dtype=torch.long)
-        labels = (torch.cat(tuple(data['label']))).to(DEVICE, dtype=torch.long)
+        ids = (torch.stack(tuple(data['input_ids']))).to(DEVICE, dtype=torch.long)
+        mask = (torch.stack(tuple(data['attention_mask']))).to(DEVICE, dtype=torch.long)
+        labels = (torch.stack(tuple(data['label']))).to(DEVICE, dtype=torch.long)
 
         size_temp = ids.size(0)
         outputs = bert_model(ids, mask)
