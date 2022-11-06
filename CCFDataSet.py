@@ -21,7 +21,8 @@ class CCFDataSet(Dataset):
         abstract = self.abstract[index]
         label = self.label_id[index]
         text = "专利标题是《{}》，属于“{}”公司，摘要如下：{}".format(title, assignee, abstract)
-        inputs = self.tokenizer.encode_plus(text, truncation=True, add_special_tokens=True, max_length=self.max_len)
+        inputs = self.tokenizer.encode_plus(text, truncation=True, add_special_tokens=True,
+                                            max_length=self.max_len, padding="max_length")
 
         return {'input_ids': inputs['input_ids'],
                 'attention_mask': inputs['attention_mask'],
