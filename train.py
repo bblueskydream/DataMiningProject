@@ -6,13 +6,9 @@ from sklearn.model_selection import StratifiedKFold
 from torch.optim import lr_scheduler, AdamW
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from transformers import AutoTokenizer, AutoModelForMaskedLM, AutoConfig
+from transformers import AutoConfig, BertTokenizer, BertModel
 from BertClassify import BertClassify
 from CCFDataSet import CCFDataSet
-
-
-def criterion(output, label):
-    return nn.CrossEntropyLoss()(output, label)
 
 
 # params
@@ -21,7 +17,7 @@ DATA_PATH = "../data/train.json"
 SAVE_PATH = "../model/model.pth"
 FOLD = 10
 MAX_LEN = 512
-TRAIN_BATCH_SIZE = 4
+TRAIN_BATCH_SIZE = 1
 TEST_BATCH_SIZE = 4
 DEVICE = torch.device("cuda:0")
 LR = 1e-5
@@ -32,9 +28,9 @@ EPOCH_TIMES = 40
 T_MAX = 500
 
 
-tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
+tokenizer = BertTokenizer.from_pretrained(MODEL_PATH)
 
-model = AutoModelForMaskedLM.from_pretrained(MODEL_PATH)
+model = BertModel.from_pretrained(MODEL_PATH)
 
 config = AutoConfig.from_pretrained(MODEL_PATH)
 
@@ -68,8 +64,8 @@ vali = df.reset_index(drop=True)
 
 trainSet = CCFDataSet(train, tokenizer, MAX_LEN)
 valiSet = CCFDataSet(vali, tokenizer, MAX_LEN)
-print(len(trainSet))
-print(len(valiSet))
+# print(len(trainSet))
+# print(len(valiSet))
 
 trainLoader = DataLoader(dataset=trainSet, batch_size=TRAIN_BATCH_SIZE, shuffle=True, drop_last=True)
 valiLoader = DataLoader(dataset=valiSet, batch_size=TEST_BATCH_SIZE, shuffle=True, drop_last=True)
@@ -77,6 +73,7 @@ valiLoader = DataLoader(dataset=valiSet, batch_size=TEST_BATCH_SIZE, shuffle=Tru
 bert_model = BertClassify(model, config, CLASS_NUM)
 bert_model.to(device=DEVICE)
 
+criterion = nn.CrossEntropyLoss(reduction='mean')
 optimizer = AdamW(bert_model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
 scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=T_MAX, eta_min=LR_MIN)
 
@@ -91,13 +88,17 @@ for epoch in range(EPOCH_TIMES):
     # train
     bar = tqdm(enumerate(trainLoader), total=len(trainLoader))
     for step, data in bar:
-        ids = (torch.stack(tuple(data['input_ids']))).to(DEVICE, dtype=torch.long)
-        mask = (torch.stack(tuple(data['attention_mask']))).to(DEVICE, dtype=torch.long)
-        labels = (torch.stack(tuple(data['label']))).to(DEVICE, dtype=torch.long)
+        ids = (torch.stack(tuple(data['input_ids']))).t().to(DEVICE, dtype=torch.long)
+        mask = (torch.stack(tuple(data['attention_mask']))).t().to(DEVICE, dtype=torch.long)
+        labels = (torch.stack(tuple(data['label']))).t().to(DEVICE, dtype=torch.long)
 
         size_temp = ids.size(0)
+        # print(ids.size())
+        # print(mask.size())
         outputs = bert_model(ids, mask)
 
+        print(outputs.size())
+        print(labels.size())
         loss_temp = criterion(outputs, labels)
         loss_temp.backward()
 
