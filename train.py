@@ -14,6 +14,7 @@ from CCFDataSet import CCFDataSet
 # params
 MODEL_PATH = "../data/bert-base-chinese"
 DATA_PATH = "../data/train.json"
+EXTENDED_PATH = "../data/train_extra.json"
 SAVE_PATH = "../model/model.pth"
 FOLD = 10
 MAX_LEN = 512
@@ -24,7 +25,7 @@ LR = 1e-5
 LR_MIN = 1e-6
 WEIGHT_DECAY = 1e-6
 CLASS_NUM = 36
-EPOCH_TIMES = 40
+EPOCH_TIMES = 100
 T_MAX = 500
 
 
@@ -112,6 +113,7 @@ for epoch in range(EPOCH_TIMES):
 
         epoch_loss = loss / size
         bar.set_postfix(Epoch=epoch, Tran_loss=epoch_loss, LR=optimizer.param_groups[0]['lr'])
+
     if loss < best_loss:
         print(f'loss improved {best_loss} --> {loss}')
         best_loss = loss
@@ -119,4 +121,4 @@ for epoch in range(EPOCH_TIMES):
         torch.save(bert_model.state_dict(), SAVE_PATH)
 
 print(f'best loss is {best_loss}')
-print(f'best weights is {best_weights}')
+# print(f'best weights is {best_weights}')
