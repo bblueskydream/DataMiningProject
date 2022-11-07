@@ -85,6 +85,7 @@ for epoch in range(EPOCH_TIMES):
     bert_model.train()
     size = 0
     loss = 0.0
+    epoch_loss = 0.0
 
     # train
     bar = tqdm(enumerate(trainLoader), total=len(trainLoader))
@@ -116,6 +117,7 @@ for epoch in range(EPOCH_TIMES):
 
     if loss < best_loss:
         print(f'loss improved {best_loss} --> {loss}')
+        print(f"epoch{epoch}_loss is {epoch_loss}")
         best_loss = loss
         best_weights = copy.deepcopy(bert_model.state_dict())
         torch.save(bert_model.state_dict(), SAVE_PATH)
